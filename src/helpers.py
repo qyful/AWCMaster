@@ -1,6 +1,15 @@
 import sys
 import os
 import ffmpeg
+import pickle
+
+def save_project(path: str, data: dict) -> bool:    
+    with open(path, 'wb') as handle:
+        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def open_project(path: str) -> dict:    
+    with open(path, 'rb') as handle:
+        return pickle.load(handle)
 
 def get_path(file_name: str) -> str:
     """
@@ -45,33 +54,41 @@ def convert_to_wav(file_list: list):
         except ffmpeg.Error as e:
             print(f"Error converting {file_path}: {e}")
 
-"""def get_file_info(path: str) -> dict:
-    audio_file_info = {}
+def get_file_info(file_path: str) -> dict:
+    try:
+        audio_file_info = {}
 
-    for filename in os.listdir(path):
-        file_path = os.path.join(path, filename)
+        probe = ffmpeg.probe(file_path)
+        audio_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'audio'), None)
+        
+        if not audio_stream:
+            print(f"No audio stream found in {file_path}")
+            return None
+        
+        path, file_extension = os.path.splitext(file_path)
+        
+        file_name = path.split('\\')[-1]
 
-        if os.path.isfile(file_path):
-            try:
-                audio = File(file_path)
-                if audio is not None:
-                    file_name, file_extension = os.path.splitext(filename)
+        duration = float(audio_stream['duration'])
 
-                    if file_extension not in [".wav", ".mp3", ".ogg"]:
-                        continue
+        sample_rate = int(audio_stream['sample_rate'])
+        num_samples = int(sample_rate * duration)
 
-                    file_size = os.path.getsize(file_path)
-                    file_length = audio.info.length
+        duration = f"{round(duration)}s"
+        file_extension = file_extension.replace('.', '', 1)
+        
+        file_size = os.path.getsize(file_path)
+        file_size = format_file_size(file_size)
 
-                    file_extension = file_extension.replace('.', '').upper()
-                    file_size = format_file_size(file_size)
-                    file_length = f"{round(file_length)}s"
+        audio_file_info['file_name']      = file_name
+        audio_file_info['file_extension'] = file_extension
+        audio_file_info['path']           = path
+        audio_file_info['duration']       = duration
+        audio_file_info['file_size']      = file_size
+        audio_file_info['samples']        = num_samples
 
-                    audio_file_info['file_name'] = file_name
-                    audio_file_info['file_extension'] = file_extension
-                    audio_file_info['file_length'] = file_length
-                    audio_file_info['file_size'] = file_size
-            except Exception:
-                return False
-
-    return audio_file_info"""
+        return audio_file_info
+    
+    except ffmpeg.Error as e:
+        print(f"Error getting properties for {file_path}: {e}")
+        return None

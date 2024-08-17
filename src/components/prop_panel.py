@@ -22,6 +22,7 @@ class PropertiesPanel(wx.Panel):
         leftAWCContainer.Add(soundTypeLabel, 0, wx.ALL | wx.EXPAND, 4)
         self.soundType = wx.Choice(self, wx.ID_ANY, choices=["SimpleSound", "Siren"])
         self.soundType.SetSelection(0)
+        self.soundType.Disable()
         soundTypeLabel.Add(self.soundType, 1, wx.EXPAND, 0)
 
         # Sample Rate
@@ -40,7 +41,7 @@ class PropertiesPanel(wx.Panel):
         # Flags
         rightAWCContainer = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, "Flags"), wx.HORIZONTAL)
         AWCContainer.Add(rightAWCContainer, 1, wx.ALL, 4)
-        self.flags = wx.CheckListBox(self, wx.ID_ANY, choices=["Flags2", "Unk01", "Volume", "VolumeVariance", "Pitch", "PitchVariance", "Pan", "PanVariance", "PreDelay", "PreDelayVariance", "StartOffset", "StartOffsetVariance"], style=wx.LB_SINGLE)
+        self.flags = wx.CheckListBox(self, wx.ID_ANY, choices=["Flags2","Unk01","Volume","VolumeVariance","Pitch","PitchVariance","Pan","PanVariance","PreDelay","PreDelayVariance","StartOffset","StartOffsetVariance","AttackTime","ReleaseTime","DopplerFactor","Category","LPFCutOff","LPFCutOffVariance","HPFCutOff","HPFCutOffVariance","UnkHash3","DistanceAttentuation","Unk19","Unk20","Unk21","UnkHash4","UnkHash5","Unk22","Unk23","Unk24","Unk25","Unk26"], style=wx.LB_SINGLE)
         rightAWCContainer.Add(self.flags, 0, 0, 0)
 
         # Audiobank and Soundset Name
@@ -62,6 +63,7 @@ class PropertiesPanel(wx.Panel):
         self.soundsetName = wx.TextCtrl(self, wx.ID_ANY, "custom_sounds")
         sizer_16.Add(self.soundsetName, 1, wx.ALL, 4)
 
+        # Generate Button
         generateBtnContainer = wx.BoxSizer(wx.HORIZONTAL)
         sizer.Add(generateBtnContainer, 0, wx.ALL | wx.EXPAND, 8)
 
@@ -69,6 +71,16 @@ class PropertiesPanel(wx.Panel):
         generateBtnContainer.Add(self.generateBtn, 0, 0, 4)
 
         self.SetSizer(sizer)
+
+    def SetDefaultProperties(self):
+        self.Disable()
+        self.soundName.SetValue("")
+        self.sampleRate.SetSelection(5)
+        
+        checkedItems = self.flags.CheckedItems
+
+        for checked in checkedItems:
+            self.flags.Check(checked, False)
 
     def GetSizer(self):
         return super().GetSizer()

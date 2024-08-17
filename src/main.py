@@ -1,16 +1,20 @@
 import wx
-# from helpers import get_path
+from helpers import get_file_info, save_project, open_project
 from components import menuBar, PropertiesPanel, SoundListPanel
 # import XMLGen
 # import pyi_splash # For Pyinstaller purposes
 
-loadedProject = {}
-currentProject = {}
+currentProjectPath = ""
+currentProject = {"sound_files": {}}
+loadedProject = {"sound_files": {}}
+
+currentItem = ""
 
 class App(wx.Frame):
     def __init__(self, *args, **kwds):
         kwds["style"] = kwds.get("style", 0) | wx.BORDER_SIMPLE | wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds)
+        
         self.SetSize((800, 600))
         self.SetTitle("AWCMaster v1.1.0")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
@@ -38,13 +42,89 @@ class App(wx.Frame):
 
         self.splitterParent.SplitVertically(self.leftSplitterPanel, self.rightSplitterPanel)
 
+        self.sound_list_panel.addSoundBtn.Bind(wx.EVT_BUTTON, self.onAddSound)
+        self.sound_list_panel.delSoundBtn.Bind(wx.EVT_BUTTON, self.onRemoveSound)
+        self.sound_list_panel.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected)
+        self.sound_list_panel.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onItemDeselected)
+
+        self.properties_panel.SetDefaultProperties()
         self.Layout()
 
-    def onClose(self, event):
-        if event.CanVeto():
-            if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?", wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
-                event.Veto()
+    def onItemDeselected(self, e):
+        self.properties_panel.SetDefaultProperties()
+
+    def onItemSelected(self, e):
+        soundsList = self.sound_list_panel.soundsList
+
+        index = soundsList.GetFirstSelected()
+
+        if index >= 0:
+            item = soundsList.GetItem(index, 0)
+            file_name = item.GetText()
+
+            self.properties_panel.soundName.SetValue(file_name)
+            
+            for item in currentProject["sound_files"][file_name]["flags"]:
+                self.properties_panel.flags.Check(item)
+
+            self.properties_panel.Enable()
+
+    def onRemoveSound(self, e):
+        selected = self.sound_list_panel.soundsList.GetFirstSelected()
+
+        if selected != -1:
+            file_name = [file_name for file_name in currentProject["sound_files"].keys()][selected]
+            currentProject["sound_files"].pop(file_name)
+
+            self.sound_list_panel.soundsList.DeleteItem(selected)
+
+            if self.sound_list_panel.soundsList.GetItemCount() < 1:
+                self.properties_panel.SetDefaultProperties()
+                self.sound_list_panel.delSoundBtn.Disable()
+        else:
+            wx.MessageBox("You need to select an item", "An error occurred", wx.ICON_ERROR | wx.OK)
+
+    def onAddSound(self, e):
+        with wx.FileDialog(self, "Open Audio File", wildcard="*.wav;*.mp3;*.ogg",
+                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
+
+            path_name = fileDialog.GetPath()
+            try:
+                self.properties_panel.Enable()
+
+                info = get_file_info(path_name)
+
+                if info:
+                    currentProject["sound_files"][info["file_name"]] = info
+                    currentProject["sound_files"][info["file_name"]]["flags"] = [2, 15]
+
+                    data = [info["file_name"], info["file_extension"], info["duration"], info["file_size"]]
+                    self.sound_list_panel.soundsList.Append(data)
+
+                    _indexed_file_names = [file_name for file_name in currentProject["sound_files"].keys()]
+                    
+                    for item in _indexed_file_names:
+                        if item == info["file_name"]:
+                            self.sound_list_panel.soundsList.Select(_indexed_file_names.index(item))
+                            break
+
+                    self.properties_panel.flags.Check(2) # Volume
+                    self.properties_panel.flags.Check(15) # Category
+                    self.properties_panel.soundName.SetValue(info["file_name"])
+                    self.sound_list_panel.delSoundBtn.Enable()
+
+            except IOError:
+                wx.LogError("Cannot open file '%s'." % path_name)
+
+    def onClose(self, e):
+        if e.CanVeto():
+            if loadedProject != currentProject:
+                if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?", wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+                    e.Veto()
+                    return
 
         self.Destroy()
 
@@ -70,10 +150,11 @@ class MyApp(wx.App):
             if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?",
                              wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
                 return
+            
+            currentProject["sound_files"] = {}
 
-            print("I was changed")
-        else:
-            print("I wasn't")
+            self.frame.sound_list_panel.soundsList.DeleteAllItems()
+            self.frame.properties_panel.SetDefaultProperties()
 
     def openProj(self, e):
         with wx.FileDialog(self.frame, "Open AWCMaster Project", wildcard="AWC Project (*.awcproj)|*.awcproj",
@@ -88,13 +169,33 @@ class MyApp(wx.App):
                     return
 
             path_name = fileDialog.GetPath()
+            
+            global currentProjectPath
+            currentProjectPath = path_name
+
             try:
-                print(path_name)
+                result = open_project(path_name)
+
+                if result:
+                    currentProject["sound_files"] = result["sound_files"]
+                    for value in currentProject["sound_files"].values():
+                        self.frame.sound_list_panel.soundsList.Append(
+                            [
+                                value["file_name"],
+                                value["file_extension"],
+                                value["duration"],
+                                value["file_size"]
+                            ]
+                        )
+
             except IOError:
                 wx.LogError("Cannot open file '%s'." % path_name)
 
     def saveProj(self, e):
-        print("3")
+        if currentProjectPath != "":
+            save_project(currentProjectPath, currentProject)
+        else:
+            self.saveProjAs(wx.EVT_BUTTON)
 
     def saveProjAs(self, e):
         with wx.FileDialog(self.frame, "Save AWCMaster Project", wildcard="AWC Project (*.awcproj)|*.awcproj",
@@ -105,7 +206,7 @@ class MyApp(wx.App):
 
             path_name = fileDialog.GetPath()
             try:
-                print(path_name)
+                save_project(path_name, currentProject)
             except IOError:
                 wx.LogError("Cannot save current data in file '%s'." % path_name)
     
