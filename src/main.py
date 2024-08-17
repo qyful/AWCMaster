@@ -1,7 +1,7 @@
-from helpers import get_path
 import wx
-from components import menuBar, PropertiesPanel, SoundListPanel 
-import XMLGen
+# from helpers import get_path
+from components import menuBar, PropertiesPanel, SoundListPanel
+# import XMLGen
 
 loadedProject = {}
 currentProject = {}
@@ -31,7 +31,7 @@ class App(wx.Frame):
 
         self.properties_panel = PropertiesPanel(self.rightSplitterPanel)
         right_sizer.Add(self.properties_panel, 1, wx.EXPAND)
-        
+
         self.sound_list_panel = SoundListPanel(self.leftSplitterPanel)
         left_sizer.Add(self.sound_list_panel, 1, wx.EXPAND)
 
@@ -44,7 +44,7 @@ class App(wx.Frame):
             if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?", wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
                 event.Veto()
                 return
-            
+
         self.Destroy()
 
 class MyApp(wx.App):
@@ -55,18 +55,19 @@ class MyApp(wx.App):
 
         self.menu_bar = menuBar(self.frame)
 
-        _menuBar = self.menu_bar.frame_menubar
+        _menu_bar = self.menu_bar.frame_menubar
 
-        _menuBar.Bind(wx.EVT_MENU, self.newProj, _menuBar.newProj)
-        _menuBar.Bind(wx.EVT_MENU, self.openProj, _menuBar.openProj)
-        _menuBar.Bind(wx.EVT_MENU, self.saveProj, _menuBar.saveProj)
-        _menuBar.Bind(wx.EVT_MENU, self.saveProjAs, _menuBar.saveProjAs)
+        _menu_bar.Bind(wx.EVT_MENU, self.newProj, _menu_bar.newProj)
+        _menu_bar.Bind(wx.EVT_MENU, self.openProj, _menu_bar.openProj)
+        _menu_bar.Bind(wx.EVT_MENU, self.saveProj, _menu_bar.saveProj)
+        _menu_bar.Bind(wx.EVT_MENU, self.saveProjAs, _menu_bar.saveProjAs)
 
         return True
-    
+
     def newProj(self, e):
         if loadedProject != currentProject:
-            if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?", wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
+            if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?",
+                             wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
                 return
 
             print("I was changed")
@@ -81,14 +82,15 @@ class MyApp(wx.App):
                 return
 
             if loadedProject != currentProject:
-                if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?", wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
+                if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?",
+                                 wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
                     return
-            
-            pathname = fileDialog.GetPath()
+
+            path_name = fileDialog.GetPath()
             try:
-                print(pathname)
+                print(path_name)
             except IOError:
-                wx.LogError("Cannot open file '%s'." % pathname)
+                wx.LogError("Cannot open file '%s'." % path_name)
 
     def saveProj(self, e):
         print("3")
@@ -100,11 +102,11 @@ class MyApp(wx.App):
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
 
-            pathname = fileDialog.GetPath()
+            path_name = fileDialog.GetPath()
             try:
-                print(pathname)
+                print(path_name)
             except IOError:
-                wx.LogError("Cannot save current data in file '%s'." % pathname)
+                wx.LogError("Cannot save current data in file '%s'." % path_name)
     
 def main():
     app = MyApp(0)

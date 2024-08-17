@@ -1,4 +1,5 @@
-import sys, os
+import sys
+import os
 
 def get_path(file_name: str) -> str:
     """
