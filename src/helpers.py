@@ -32,27 +32,41 @@ def format_file_size(file_size: int, suffix="B"):
     """
     Returns the formatted, human-readable version of a file's size from bytes.
     """
-
     for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
         if abs(file_size) < 1024.0:
             return f"{file_size:3.1f} {unit}{suffix}"
+        
         file_size /= 1024.0
+
     return f"{file_size:.1f} Yi{suffix}"
 
-def convert_to_wav(file_list: list):
+def convert_to_wav(data: dict, output_path: str = os.getcwd()):
     """
     Converts each item from a list of file paths into the appropriate ADPCM format as a WAVE file.
     """
+    paths = []
 
-    for file_path in file_list:
+    for value in data["sound_files"].values():
+        paths.append(value["path"])
+
+    for file_path in paths:
+        input_path = file_path
+        file_path = output_path + "\\output\\audiodirectory\\%s".format(data["audiobank_name"])
+
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
+
+        file_path = file_path + "\\" + file_path.split('\\')[-1]
+
+        file_path, file_extension = os.path.splitext(file_path)
         output_file = file_path.rsplit('.', 1)[0] + '.wav'
-        
+
         try:
-            ffmpeg.input(file_path).output(output_file, ar=44100, acodec='adpcm_ima_wav').run(overwrite_output=True)
+            ffmpeg.input(input_path).output(output_file, ar=44100, acodec='adpcm_ima_wav').run(overwrite_output=True)
             
-            print(f"Successfully converted {file_path} to {output_file}")
+            return True, f"Successfully converted {file_path} to {output_file}"
         except ffmpeg.Error as e:
-            print(f"Error converting {file_path}: {e}")
+            return False, f"Error converting {file_path}: {e}"
 
 def get_file_info(file_path: str) -> dict:
     try:
@@ -68,6 +82,7 @@ def get_file_info(file_path: str) -> dict:
         path, file_extension = os.path.splitext(file_path)
         
         file_name = path.split('\\')[-1]
+        path = path + file_extension
 
         duration = float(audio_stream['duration'])
 

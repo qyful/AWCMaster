@@ -72,8 +72,14 @@ class PropertiesPanel(wx.Panel):
 
         self.SetSizer(sizer)
 
+    def EnableProperties(self):
+        for item in [self.soundType, self.sampleRate, self.flags, self.soundName]:
+            item.Enable()
+
     def SetDefaultProperties(self):
-        self.Disable()
+        for item in [self.soundType, self.sampleRate, self.flags, self.soundName]:
+            item.Disable()
+
         self.soundName.SetValue("")
         self.sampleRate.SetSelection(5)
         

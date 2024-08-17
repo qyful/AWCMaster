@@ -1,12 +1,13 @@
 import wx
-from helpers import get_file_info, save_project, open_project
+from helpers import get_file_info, save_project, open_project, convert_to_wav
 from components import menuBar, PropertiesPanel, SoundListPanel
+from os import getcwd
 # import XMLGen
 # import pyi_splash # For Pyinstaller purposes
 
 currentProjectPath = ""
-currentProject = {"sound_files": {}}
-loadedProject = {"sound_files": {}}
+currentProject = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds"}
+loadedProject = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds"}
 
 currentItem = ""
 
@@ -48,7 +49,61 @@ class App(wx.Frame):
         self.sound_list_panel.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onItemDeselected)
 
         self.properties_panel.SetDefaultProperties()
+        self.properties_panel.generateBtn.Bind(wx.EVT_BUTTON, self.onGenerate)
+        self.properties_panel.audiobankName.Bind(wx.EVT_TEXT, self.onAudiobankUpdate)
+        self.properties_panel.soundsetName.Bind(wx.EVT_TEXT, self.onSoundsetUpdate)
+        self.properties_panel.soundName.Bind(wx.EVT_TEXT, self.onSoundNameUpdate)
+        self.properties_panel.sampleRate.Bind(wx.EVT_CHOICE, self.onSampleRateUpdate)
+        self.properties_panel.flags.Bind(wx.EVT_CHECKLISTBOX, self.onFlagUpdate)
+
         self.Layout()
+
+    def _get_current_sound(self) -> str:
+        selected = self.sound_list_panel.soundsList.GetFirstSelected()
+
+        if selected != -1:
+            file_name = [file_name for file_name in currentProject["sound_files"].keys()][selected]
+
+            return file_name
+        else:
+            return False
+
+    def onAudiobankUpdate(self, e):
+        currentProject["audiobank_name"] = self.properties_panel.audiobankName.GetValue()
+
+    def onSoundsetUpdate(self, e):
+        currentProject["soundset_name"] = self.properties_panel.soundsetName.GetValue()
+    
+    def onSampleRateUpdate(self, e):
+        selected = self._get_current_sound()
+
+        if selected:
+            index = self.properties_panel.sampleRate.GetSelection()
+
+            currentProject["sound_files"][selected]["sample_rate"] = self.properties_panel.sampleRate.GetItems()[index]
+    
+    def onSoundNameUpdate(self, e):
+        selected = self._get_current_sound()
+
+        if selected:
+            currentProject["sound_files"][selected]["file_name"] = self.properties_panel.soundName.GetValue()
+
+            print(currentProject["sound_files"][selected]["file_name"])
+
+    def onFlagUpdate(self, e):
+        selected = self._get_current_sound()
+
+        if selected:
+            currentProject["sound_files"][selected]["flags"] = self.properties_panel.flags.GetCheckedItems()
+
+    def onGenerate(self, e):
+        dirDialog = wx.DirDialog(None, "Choose output directory", getcwd(),
+                    wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+
+        if dirDialog.ShowModal() == wx.ID_OK:
+            path_name = dirDialog.GetPath()
+
+        convert_to_wav(currentProject, output_path=path_name)
 
     def onItemDeselected(self, e):
         self.properties_panel.SetDefaultProperties()
@@ -61,22 +116,24 @@ class App(wx.Frame):
         if index >= 0:
             item = soundsList.GetItem(index, 0)
             file_name = item.GetText()
+            current_file = currentProject["sound_files"][file_name]
 
-            self.properties_panel.soundName.SetValue(file_name)
+            self.properties_panel.soundName.ChangeValue(current_file["file_name"])
+            self.properties_panel.sampleRate.SetStringSelection(current_file["sample_rate"])
             
-            for item in currentProject["sound_files"][file_name]["flags"]:
+            for item in current_file["flags"]:
                 self.properties_panel.flags.Check(item)
 
-            self.properties_panel.Enable()
+            self.properties_panel.EnableProperties()
 
     def onRemoveSound(self, e):
-        selected = self.sound_list_panel.soundsList.GetFirstSelected()
+        selected = self._get_current_sound()
 
-        if selected != -1:
-            file_name = [file_name for file_name in currentProject["sound_files"].keys()][selected]
-            currentProject["sound_files"].pop(file_name)
+        if selected:
+            currentProject["sound_files"].pop(selected)
 
-            self.sound_list_panel.soundsList.DeleteItem(selected)
+            index = self.sound_list_panel.soundsList.GetFirstSelected()
+            self.sound_list_panel.soundsList.DeleteItem(index)
 
             if self.sound_list_panel.soundsList.GetItemCount() < 1:
                 self.properties_panel.SetDefaultProperties()
@@ -93,13 +150,16 @@ class App(wx.Frame):
 
             path_name = fileDialog.GetPath()
             try:
-                self.properties_panel.Enable()
+                self.properties_panel.EnableProperties()
 
                 info = get_file_info(path_name)
 
                 if info:
                     currentProject["sound_files"][info["file_name"]] = info
-                    currentProject["sound_files"][info["file_name"]]["flags"] = [2, 15]
+                    
+                    current_file = currentProject["sound_files"][info["file_name"]]
+                    current_file["flags"] = [2, 15]
+                    current_file["sample_rate"] = "44100"
 
                     data = [info["file_name"], info["file_extension"], info["duration"], info["file_size"]]
                     self.sound_list_panel.soundsList.Append(data)
@@ -113,9 +173,9 @@ class App(wx.Frame):
 
                     self.properties_panel.flags.Check(2) # Volume
                     self.properties_panel.flags.Check(15) # Category
-                    self.properties_panel.soundName.SetValue(info["file_name"])
+                    self.properties_panel.soundName.ChangeValue(info["file_name"])
                     self.sound_list_panel.delSoundBtn.Enable()
-
+                    
             except IOError:
                 wx.LogError("Cannot open file '%s'." % path_name)
 
