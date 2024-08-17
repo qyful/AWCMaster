@@ -1,2 +1,2 @@
-from dat54 import *
-from awc import *
+from .dat54 import *
+from .awc import *
