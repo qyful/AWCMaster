@@ -62,6 +62,12 @@ class PropertiesPanel(wx.Panel):
         self.soundsetName = wx.TextCtrl(self, wx.ID_ANY, "custom_sounds")
         sizer_16.Add(self.soundsetName, 1, wx.ALL, 4)
 
+        generateBtnContainer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(generateBtnContainer, 0, wx.ALL | wx.EXPAND, 8)
+
+        self.generateBtn = wx.Button(self, wx.ID_ANY, "Generate")
+        generateBtnContainer.Add(self.generateBtn, 0, 0, 4)
+
         self.SetSizer(sizer)
 
     def GetSizer(self):

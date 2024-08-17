@@ -2,6 +2,7 @@ import wx
 # from helpers import get_path
 from components import menuBar, PropertiesPanel, SoundListPanel
 # import XMLGen
+# import pyi_splash # For Pyinstaller purposes
 
 loadedProject = {}
 currentProject = {}
