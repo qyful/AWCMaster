@@ -30,11 +30,11 @@ We welcome contributions from the community! To ensure a smooth collaboration pr
 
 ## License
 
-This project is licensed under the GPLv3 License. See the [LICENSE]
+This project is licensed under the GPLv3 License. See the [LICENSE](https://github.com/qyful/AWCMaster/blob/main/LICENSE)
 
 ## Contact
 
-For any questions or feedback, feel free to [open an issue](https://github.com/qyful/awcmaster/issues) or reach out directly via Discord @qyful.
+For any questions or feedback, feel free to [open an issue](https://github.com/qyful/awcmaster/issues) or reach out directly via Discord @Qyful.
 
 ---
 
