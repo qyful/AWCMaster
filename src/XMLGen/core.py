@@ -14,7 +14,14 @@ class SimpleSound:
         self.data_dir = os.path.join(self.output_dir, 'data')
         self.audio_dir = os.path.join(self.output_dir, 'audiodirectory')
 
-    def construct_awc(self):
+        os.makedirs(self.data_dir, exist_ok=True)
+        os.makedirs(self.audio_dir, exist_ok=True)
+
+    def construct(self):
+        self._construct_awc()
+        self._construct_dat54()
+
+    def _construct_awc(self):
         container_paths = {"Item": []}
         for value in self.track_data.values():
             container_paths_track = f'{self.output_dir}\\{value["track"]}'
@@ -44,7 +51,7 @@ class SimpleSound:
             streaming_sound = {
                 "Item": {
                     "Name": value["track"],
-                    "FileName": value["tracks"]["left"],
+                    "FileName": value["tracks"]["ss"],
                     "Chunks": {"Item": [item["Item"] for item in simple_info]},
                 }
             }
@@ -60,7 +67,7 @@ class SimpleSound:
 
         self.write_xml_file(obj, f'{self.audio_bank_name}.awc.xml')
 
-    def construct_dat54(self):
+    def _construct_dat54(self):
         container_paths = {"Item": []}
         for value in self.track_data.values():
             container_paths_track = f'audiodirectory\\{value["track"]}'
@@ -74,7 +81,7 @@ class SimpleSound:
                     "@type": "SimpleSound",
                     "Name": f'{value["track"]}_sp',
                     "Header": {
-                        "Flags": {"@value": str(self.merge_flags(value["flags"]))},
+                        "Flags": {"@value": self.merge_flags(value["flags"])},
                         "Volume": {"@value": "200"},
                         "Category": "scripted",
                     },
