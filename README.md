@@ -2,7 +2,6 @@
 
 ![GitHub License](https://img.shields.io/github/license/qyful/AWCMaster)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/qyful/awcmaster)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/qyful/awcmaster/build.yml)](https://github.com/qyful/awcmaster/actions)
 [![Version](https://img.shields.io/github/v/release/qyful/awcmaster)](https://github.com/qyful/awcmaster/releases)
 [![Issues](https://img.shields.io/github/issues/qyful/awcmaster)](https://github.com/qyful/awcmaster/issues)
 [![Forks](https://img.shields.io/github/forks/qyful/awcmaster)](https://github.com/qyful/awcmaster/network/members)
@@ -10,7 +9,7 @@
 
 ## Overview
 
-**GTA V & FiveM Native Audio Creator** is an open-source GUI-based tool designed to help you create and edit native audio files for Grand Theft Auto V and FiveM. With an easy-to-use interface and powerful features, this tool simplifies the process of customizing audio for your scripts and mods.
+**AWCMaster** is an open-source GUI-based tool designed to help you create and edit native audio files for Grand Theft Auto V and FiveM. With an easy-to-use interface and powerful features, this tool simplifies the process of customizing audio for your scripts and mods.
 
 ## Contribution Guidelines
 

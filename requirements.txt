@@ -1,0 +1,2 @@
+wxpython==4.2.1
+elementpath==4.4.0
