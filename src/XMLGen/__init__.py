@@ -1,2 +1,1 @@
-from .dat54 import *
-from .awc import *
+from .core import SimpleSound

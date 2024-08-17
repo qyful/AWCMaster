@@ -1,6 +1,6 @@
 import sys, os
 
-def get_path():
+def get_path(file_name: str) -> str:
     """
     Returns the system path for all files depending on whether it is cloned source files or a Pyinstaller build.
     """
@@ -9,10 +9,10 @@ def get_path():
         temp_dir = getattr(sys, '_MEIPASS', None)
 
         if temp_dir:
-            ffmpeg_path = os.path.join(temp_dir, 'ffmpeg.exe')
+            path = os.path.join(temp_dir, file_name)
         else:
-            ffmpeg_path = os.path.join(os.getcwd(), 'ffmpeg.exe')
+            path = os.path.join(os.getcwd(), file_name)
     else:
-        ffmpeg_path = os.path.join(os.path.dirname(__file__), 'ffmpeg.exe')
+        path = os.path.join(os.path.dirname(__file__), file_name)
 
-    return ffmpeg_path
+    return path

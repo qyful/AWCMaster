@@ -1,11 +1,7 @@
-import XMLGen
-from helpers import get_ffmpeg_path
-
-awc = XMLGen.AWC()
-dat54 = XMLGen.Dat54()
+from helpers import get_path
 
 def main():
-    print(get_ffmpeg_path())
+    print(get_path("ffmpeg.exe"))
 
 if __name__ == '__main__':
     main()
