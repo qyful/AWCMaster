@@ -18,7 +18,7 @@
 **Install the latest Windows release** from [here](https://github.com/qyful/AWCMaster/releases/) or download the source files:
 
 ```console
-$ sgit clone https://github.com/qyful/AWCMaster.git
+$ git clone https://github.com/qyful/AWCMaster.git
 ```
 
 Then, navigate to the newly-created folder:
