@@ -40,33 +40,45 @@ def format_file_size(file_size: int, suffix="B"):
 
     return f"{file_size:.1f} Yi{suffix}"
 
-def convert_to_wav(data: dict, output_path: str = os.getcwd()):
+def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool = False):
     """
     Converts each item from a list of file paths into the appropriate ADPCM format as a WAVE file.
     """
-    paths = []
-
     for value in data["sound_files"].values():
-        paths.append(value["path"])
+        input_path = value["path"]
+        output_file = value["file_name"] + '.wav'
 
-    for file_path in paths:
-        input_path = file_path
-        file_path = output_path + "\\output\\audiodirectory\\%s".format(data["audiobank_name"])
+        file_path = output_path + "\\audiodirectory\\{0}".format(data["audiobank_name"])
 
         if not os.path.exists(file_path):
             os.makedirs(file_path)
-
-        file_path = file_path + "\\" + file_path.split('\\')[-1]
-
-        file_path, file_extension = os.path.splitext(file_path)
-        output_file = file_path.rsplit('.', 1)[0] + '.wav'
-
-        try:
-            ffmpeg.input(input_path).output(output_file, ar=44100, acodec='adpcm_ima_wav').run(overwrite_output=True)
             
-            return True, f"Successfully converted {file_path} to {output_file}"
-        except ffmpeg.Error as e:
-            return False, f"Error converting {file_path}: {e}"
+        ffmpeg.input(input_path).output("{0}\\{1}".format(file_path, output_file),
+                                        ar=int(value["sample_rate"]),
+                                        acodec='adpcm_ima_wav'
+                                       ).run(overwrite_output=True)
+        
+        if fxmanifest:
+            with open(output_path + "\\fxmanifest.lua", "w") as handler:
+                data = f"""fx_version 'cerulean'
+game 'gta5'
+
+author 'AWCMaster'
+description 'Generated with AWCMaster, a FOSS project'
+
+files {{
+    'audiodirectory/{data["audiobank_name"]}.awc',
+    'data/{data["audiobank_name"]}.dat54.rel',
+}}
+
+data_file "AUDIO_WAVEPACK" "audiodirectory"
+data_file "AUDIO_SOUNDDATA" "data/{data["audiobank_name"]}.dat"
+"""
+
+                handler.write(data)
+                handler.close()
+
+    return True
 
 def get_file_info(file_path: str) -> dict:
     try:

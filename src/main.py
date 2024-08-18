@@ -1,13 +1,17 @@
 import wx
+from os import getcwd
+import sys
 from helpers import get_file_info, save_project, open_project, convert_to_wav
 from components import menuBar, PropertiesPanel, SoundListPanel
-from os import getcwd
-# import XMLGen
-# import pyi_splash # For Pyinstaller purposes
+import generation
 
-currentProjectPath = ""
-currentProject = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds"}
-loadedProject = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds"}
+# For Pyinstaller purposes
+# import pyi_splash
+# pyi_splash.close()
+
+current_projectPath = ""
+current_project = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds", "fxmanifest": False}
+loadedProject = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds", "fxmanifest": False}
 
 currentItem = ""
 
@@ -17,9 +21,12 @@ class App(wx.Frame):
         wx.Frame.__init__(self, *args, **kwds)
         
         self.SetSize((800, 600))
-        self.SetTitle("AWCMaster v1.1.0")
+        self.SetTitle("AWCMaster v1.0.0")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
         self.Bind(wx.EVT_CLOSE, self.onClose)
+
+        icon = wx.IconLocation(sys.executable, 0)
+        self.SetIcon(wx.Icon(icon))
 
         self.frame_statusbar = self.CreateStatusBar(1, wx.STB_SIZEGRIP)
         self.frame_statusbar.SetStatusWidths([-1])
@@ -62,17 +69,17 @@ class App(wx.Frame):
         selected = self.sound_list_panel.soundsList.GetFirstSelected()
 
         if selected != -1:
-            file_name = [file_name for file_name in currentProject["sound_files"].keys()][selected]
+            file_name = [file_name for file_name in current_project["sound_files"].keys()][selected]
 
             return file_name
         else:
             return False
 
     def onAudiobankUpdate(self, e):
-        currentProject["audiobank_name"] = self.properties_panel.audiobankName.GetValue()
+        current_project["audiobank_name"] = self.properties_panel.audiobankName.GetValue()
 
     def onSoundsetUpdate(self, e):
-        currentProject["soundset_name"] = self.properties_panel.soundsetName.GetValue()
+        current_project["soundset_name"] = self.properties_panel.soundsetName.GetValue()
     
     def onSampleRateUpdate(self, e):
         selected = self._get_current_sound()
@@ -80,21 +87,25 @@ class App(wx.Frame):
         if selected:
             index = self.properties_panel.sampleRate.GetSelection()
 
-            currentProject["sound_files"][selected]["sample_rate"] = self.properties_panel.sampleRate.GetItems()[index]
+            current_item = current_project["sound_files"][selected]
+
+            current_item["sample_rate"] = self.properties_panel.sampleRate.GetItems()[index]
+            current_item["samples"] = int(current_item["sample_rate"]) * int(current_item["duration"].replace("s", ""))
     
     def onSoundNameUpdate(self, e):
         selected = self._get_current_sound()
 
         if selected:
-            currentProject["sound_files"][selected]["file_name"] = self.properties_panel.soundName.GetValue()
+            current_project["sound_files"][selected]["file_name"] = self.properties_panel.soundName.GetValue()
 
-            print(currentProject["sound_files"][selected]["file_name"])
+            index = self.sound_list_panel.soundsList.GetFirstSelected()
+            self.sound_list_panel.soundsList.SetItem(index, 0, self.properties_panel.soundName.GetValue())
 
     def onFlagUpdate(self, e):
         selected = self._get_current_sound()
 
         if selected:
-            currentProject["sound_files"][selected]["flags"] = self.properties_panel.flags.GetCheckedItems()
+            current_project["sound_files"][selected]["flags"] = self.properties_panel.flags.GetCheckedItems()
 
     def onGenerate(self, e):
         dirDialog = wx.DirDialog(None, "Choose output directory", getcwd(),
@@ -103,7 +114,30 @@ class App(wx.Frame):
         if dirDialog.ShowModal() == wx.ID_OK:
             path_name = dirDialog.GetPath()
 
-        convert_to_wav(currentProject, output_path=path_name)
+        print(current_project["fxmanifest"])
+
+        convert_to_wav(current_project, output_path=path_name + "\\output", fxmanifest = current_project["fxmanifest"])
+        
+        if self.properties_panel.soundType.GetStringSelection() == "SimpleSound":
+            data = {}
+
+            for key, item in current_project["sound_files"].items():
+                data[key] = {
+                    'track': item["file_name"],
+                    'flags': item["flags"],
+                    'samples': str(item["samples"]),
+                    'sample_rate': str(item["sample_rate"]),
+                    'tracks': {'ss': f'{item["file_name"]}.wav'}
+                }
+            ss = generation.SimpleSound(data,
+                                        self.properties_panel.audiobankName.GetValue(),
+                                        self.properties_panel.soundsetName.GetValue(),
+                                        path_name + "\\output"
+                                       )
+            
+            ss.construct()
+            wx.MessageBox("Output was generated in " + path_name, "Success",
+                            wx.ICON_INFORMATION | wx.OK, self)
 
     def onItemDeselected(self, e):
         self.properties_panel.SetDefaultProperties()
@@ -116,13 +150,11 @@ class App(wx.Frame):
         if index >= 0:
             item = soundsList.GetItem(index, 0)
             file_name = item.GetText()
-            current_file = currentProject["sound_files"][file_name]
+            current_file = current_project["sound_files"][file_name]
 
             self.properties_panel.soundName.ChangeValue(current_file["file_name"])
             self.properties_panel.sampleRate.SetStringSelection(current_file["sample_rate"])
-            
-            for item in current_file["flags"]:
-                self.properties_panel.flags.Check(item)
+            self.properties_panel.flags.SetCheckedStrings(current_file["flags"])
 
             self.properties_panel.EnableProperties()
 
@@ -130,7 +162,7 @@ class App(wx.Frame):
         selected = self._get_current_sound()
 
         if selected:
-            currentProject["sound_files"].pop(selected)
+            current_project["sound_files"].pop(selected)
 
             index = self.sound_list_panel.soundsList.GetFirstSelected()
             self.sound_list_panel.soundsList.DeleteItem(index)
@@ -155,16 +187,16 @@ class App(wx.Frame):
                 info = get_file_info(path_name)
 
                 if info:
-                    currentProject["sound_files"][info["file_name"]] = info
+                    current_project["sound_files"][info["file_name"]] = info
                     
-                    current_file = currentProject["sound_files"][info["file_name"]]
-                    current_file["flags"] = [2, 15]
+                    current_file = current_project["sound_files"][info["file_name"]]
+                    current_file["flags"] = ["Volume", "Category"]
                     current_file["sample_rate"] = "44100"
 
                     data = [info["file_name"], info["file_extension"], info["duration"], info["file_size"]]
                     self.sound_list_panel.soundsList.Append(data)
 
-                    _indexed_file_names = [file_name for file_name in currentProject["sound_files"].keys()]
+                    _indexed_file_names = [file_name for file_name in current_project["sound_files"].keys()]
                     
                     for item in _indexed_file_names:
                         if item == info["file_name"]:
@@ -181,7 +213,7 @@ class App(wx.Frame):
 
     def onClose(self, e):
         if e.CanVeto():
-            if loadedProject != currentProject:
+            if loadedProject != current_project:
                 if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?", wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
                     e.Veto()
                     return
@@ -202,16 +234,23 @@ class MyApp(wx.App):
         _menu_bar.Bind(wx.EVT_MENU, self.openProj, _menu_bar.openProj)
         _menu_bar.Bind(wx.EVT_MENU, self.saveProj, _menu_bar.saveProj)
         _menu_bar.Bind(wx.EVT_MENU, self.saveProjAs, _menu_bar.saveProjAs)
+        _menu_bar.Bind(wx.EVT_MENU, self.fxManifest, _menu_bar.genFx)
 
         return True
 
+    def fxManifest(self, e):
+        if self.menu_bar.frame_menubar.genFx.IsChecked():
+            current_project["fxmanifest"] = True
+        else:
+            current_project["fxmanifest"] = False
+
     def newProj(self, e):
-        if loadedProject != currentProject:
+        if loadedProject != current_project:
             if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?",
                              wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
                 return
             
-            currentProject["sound_files"] = {}
+            current_project["sound_files"] = {}
 
             self.frame.sound_list_panel.soundsList.DeleteAllItems()
             self.frame.properties_panel.SetDefaultProperties()
@@ -223,22 +262,23 @@ class MyApp(wx.App):
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
 
-            if loadedProject != currentProject:
+            if loadedProject != current_project:
                 if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?",
                                  wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
                     return
 
             path_name = fileDialog.GetPath()
             
-            global currentProjectPath
-            currentProjectPath = path_name
+            global current_projectPath
+            current_projectPath = path_name
 
             try:
                 result = open_project(path_name)
 
                 if result:
-                    currentProject["sound_files"] = result["sound_files"]
-                    for value in currentProject["sound_files"].values():
+                    self.frame.sound_list_panel.soundsList.DeleteAllItems()
+                    current_project["sound_files"] = result["sound_files"]
+                    for value in current_project["sound_files"].values():
                         self.frame.sound_list_panel.soundsList.Append(
                             [
                                 value["file_name"],
@@ -252,8 +292,8 @@ class MyApp(wx.App):
                 wx.LogError("Cannot open file '%s'." % path_name)
 
     def saveProj(self, e):
-        if currentProjectPath != "":
-            save_project(currentProjectPath, currentProject)
+        if current_projectPath != "":
+            save_project(current_projectPath, current_project)
         else:
             self.saveProjAs(wx.EVT_BUTTON)
 
@@ -266,7 +306,7 @@ class MyApp(wx.App):
 
             path_name = fileDialog.GetPath()
             try:
-                save_project(path_name, currentProject)
+                save_project(path_name, current_project)
             except IOError:
                 wx.LogError("Cannot save current data in file '%s'." % path_name)
     

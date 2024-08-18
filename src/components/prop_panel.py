@@ -41,7 +41,7 @@ class PropertiesPanel(wx.Panel):
         # Flags
         rightAWCContainer = wx.StaticBoxSizer(wx.StaticBox(self, wx.ID_ANY, "Flags"), wx.HORIZONTAL)
         AWCContainer.Add(rightAWCContainer, 1, wx.ALL, 4)
-        self.flags = wx.CheckListBox(self, wx.ID_ANY, choices=["Flags2","Unk01","Volume","VolumeVariance","Pitch","PitchVariance","Pan","PanVariance","PreDelay","PreDelayVariance","StartOffset","StartOffsetVariance","AttackTime","ReleaseTime","DopplerFactor","Category","LPFCutOff","LPFCutOffVariance","HPFCutOff","HPFCutOffVariance","UnkHash3","DistanceAttentuation","Unk19","Unk20","Unk21","UnkHash4","UnkHash5","Unk22","Unk23","Unk24","Unk25","Unk26"], style=wx.LB_SINGLE)
+        self.flags = wx.CheckListBox(self, wx.ID_ANY, choices=["Flags2","Unk01","Volume","VolumeVariance","Pitch","PitchVariance","Pan","PanVariance","PreDelay","PreDelayVariance","StartOffset","StartOffsetVariance","AttackTime","ReleaseTime","DopplerFactor","Category","LPFCutOff","LPFCutOffVariance","HPFCutOff","HPFCutOffVariance","UnkHash3","DistanceAttentuation","Unk19","Unk20"], style=wx.LB_SINGLE)
         rightAWCContainer.Add(self.flags, 0, 0, 0)
 
         # Audiobank and Soundset Name

@@ -17,7 +17,7 @@ class menuBar:
         self.frame_menubar.Append(self.file, "File")
 
         self.options = wx.Menu()
-        self.options.Append(-1, "Generate fxmanifest.lua", "Generate an fxmanifest.lua file for FiveM", kind=wx.ITEM_CHECK)
+        self.frame_menubar.genFx = self.options.Append(-1, "Generate fxmanifest.lua", "Generate an fxmanifest.lua file for FiveM", kind=wx.ITEM_CHECK)
         self.frame_menubar.Append(self.options, "Options")
 
         self.parent.SetMenuBar(self.frame_menubar)
