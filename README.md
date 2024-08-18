@@ -13,6 +13,28 @@
 
 **AWCMaster** is an open-source GUI-based tool designed to help you create and edit native audio files for Grand Theft Auto V and FiveM. With an easy-to-use interface and powerful features, this tool simplifies the process of customizing audio for your scripts and mods.
 
+## Usage
+
+**Install the latest Windows release** from [here](https://github.com/qyful/AWCMaster/releases/) or download the source files:
+
+```console
+    git clone https://github.com/qyful/AWCMaster.git
+```
+
+Then, navigate to the newly-created folder:
+
+```console
+    cd AWCMaster/src
+```
+
+and run the `main.py` file:
+
+```console
+    python main.py
+```
+
+**Then you're done!** There are some more advanced features such as flags, however the defaults are more than enough to get started creating your own native sounds for GTA V.
+
 ## Contribution Guidelines
 
 We welcome contributions from the community! To ensure a smooth collaboration process, please follow these guidelines:
