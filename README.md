@@ -62,4 +62,4 @@ For any questions or feedback, feel free to [open an issue](https://github.com/q
 
 ---
 
-*This project is not affiliated with or endorsed by Rockstar Games, Grand Theft Auto V, or FiveM.*
+*This project is not affiliated with or endorsed by Rockstar Games, Grand Theft Auto V, FiveM, or CFX.re.*
