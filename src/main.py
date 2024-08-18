@@ -21,7 +21,7 @@ class App(wx.Frame):
         wx.Frame.__init__(self, *args, **kwds)
         
         self.SetSize((800, 600))
-        self.SetTitle("AWCMaster v1.0.0")
+        self.SetTitle("AWCMaster v1.0.2")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -98,14 +98,16 @@ class App(wx.Frame):
         if selected:
             current_project["sound_files"][selected]["file_name"] = self.properties_panel.soundName.GetValue()
 
-            index = self.sound_list_panel.soundsList.GetFirstSelected()
-            self.sound_list_panel.soundsList.SetItem(index, 0, self.properties_panel.soundName.GetValue())
+            # index = self.sound_list_panel.soundsList.GetFirstSelected()
+            # self.sound_list_panel.soundsList.SetItem(index, 0, self.properties_panel.soundName.GetValue())
+
+            # The above bricks the selection code. Need to think of a better way to use the `current_project` dictionary
 
     def onFlagUpdate(self, e):
         selected = self._get_current_sound()
 
         if selected:
-            current_project["sound_files"][selected]["flags"] = self.properties_panel.flags.GetCheckedItems()
+            current_project["sound_files"][selected]["flags"] = self.properties_panel.flags.GetCheckedStrings()
 
     def onGenerate(self, e):
         dirDialog = wx.DirDialog(None, "Choose output directory", getcwd(),
