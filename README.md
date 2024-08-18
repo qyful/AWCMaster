@@ -47,7 +47,7 @@ We welcome contributions from the community! To ensure a smooth collaboration pr
 
 4. **Submit a pull request** after making your changes. Make sure to reference any related issues in your PR.
 
-5. **Ensure all tests pass** and the code adheres to the [PEP 8 guidelines](https://peps.python.org/pep-0008/) before submitting your PR.
+5. **Ensure the code adheres to the [PEP 8 guidelines](https://peps.python.org/pep-0008/)** before submitting your PR.
 
 6. **Respect the community** and the work of others. Collaboration is key!
 
