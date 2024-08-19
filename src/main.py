@@ -1,5 +1,4 @@
 import wx
-import os
 import sys
 import wave
 from helpers import get_file_info, save_project, open_project, convert_to_wav
