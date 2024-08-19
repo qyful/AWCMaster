@@ -78,7 +78,7 @@ class App(wx.Frame):
 
     def onSoundsetUpdate(self, e):
         current_project["soundset_name"] = self.properties_panel.soundsetName.GetValue()
-    
+
     def onSampleRateUpdate(self, e):
         selected = self._get_current_sound()
 
