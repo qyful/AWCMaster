@@ -112,12 +112,9 @@ def get_file_info(file_path: str) -> dict:
 
     probe = json.loads(stdout.decode('utf-8'))
 
-    print(probe)
-
     audio_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'audio'), None)
-    print(audio_stream)
+
     if not audio_stream:
-        print(f"No audio stream found in {file_path}")
         return None
     
     path, file_extension = os.path.splitext(file_path)

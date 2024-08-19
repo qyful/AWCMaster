@@ -1,6 +1,7 @@
 import wx
 import sys
 import wave
+import time
 from helpers import get_file_info, save_project, open_project, convert_to_wav
 from components import menuBar, PropertiesPanel, SoundListPanel, DirDialog
 import generation
@@ -19,7 +20,7 @@ class App(wx.Frame):
         wx.Frame.__init__(self, *args, **kwargs)
         
         self.SetSize((800, 600))
-        self.SetTitle("AWCMaster v2.0.2")
+        self.SetTitle("AWCMaster v2.1.1")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -116,6 +117,8 @@ class App(wx.Frame):
                                                         fxmanifest = current_project["fxmanifest"]
                                                        )["sound_files"]
 
+        time.sleep(1)
+
         if self.properties_panel.soundType.GetStringSelection() == "SimpleSound":
             data = {}
 
@@ -174,47 +177,43 @@ class App(wx.Frame):
             if self.sound_list_panel.soundsList.GetItemCount() < 1:
                 self.properties_panel.SetDefaultProperties()
                 self.sound_list_panel.delSoundBtn.Disable()
+            else:
+                self.sound_list_panel.soundsList.Select(0)
         else:
             wx.MessageBox("You need to select an item", "An error occurred", wx.ICON_ERROR | wx.OK)
 
     def onAddSound(self, e):
         with wx.FileDialog(self, "Open Audio File", wildcard="*.wav;*.mp3;*.ogg",
-                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.FD_MULTIPLE) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
 
-            path_name = fileDialog.GetPath()
-            try:
-                self.properties_panel.EnableProperties()
+            paths = fileDialog.GetPaths()
 
-                info = get_file_info(path_name)
+            for path in paths:
+                try:
+                    self.properties_panel.EnableProperties()
 
-                if info:
-                    current_project["sound_files"][info["file_name"]] = info
-                    
-                    current_file = current_project["sound_files"][info["file_name"]]
-                    current_file["flags"] = ["Volume", "Category"]
-                    current_file["sample_rate"] = "44100"
+                    info = get_file_info(path)
 
-                    data = [info["file_name"], info["file_extension"], info["duration"], info["file_size"]]
-                    self.sound_list_panel.soundsList.Append(data)
+                    if info:
+                        current_project["sound_files"][info["file_name"]] = info
 
-                    _indexed_file_names = [file_name for file_name in current_project["sound_files"].keys()]
-                    
-                    for item in _indexed_file_names:
-                        if item == info["file_name"]:
-                            self.sound_list_panel.soundsList.Select(_indexed_file_names.index(item))
-                            break
+                        current_file = current_project["sound_files"][info["file_name"]]
+                        current_file["flags"] = ["Volume", "Category"]
+                        current_file["sample_rate"] = "44100"
 
-                    # self.properties_panel.flags.Check(2) # Volume
-                    # self.properties_panel.flags.Check(15) # Category
-                    self.properties_panel.soundName.ChangeValue(info["file_name"])
-                    self.sound_list_panel.delSoundBtn.Enable()
-                    
-            except IOError as e:
-                print(e)
-                wx.LogError("Cannot open file '%s'." % path_name)
+                        data = [info["file_name"], info["file_extension"], info["duration"], info["file_size"]]
+
+                        if self.sound_list_panel.soundsList.FindItem(-1, info["file_name"]) == wx.NOT_FOUND:
+                            self.sound_list_panel.soundsList.Append(data)
+
+                        self.properties_panel.soundName.ChangeValue(info["file_name"])
+                        self.sound_list_panel.delSoundBtn.Enable()
+                        
+                except IOError:
+                    wx.LogError("Cannot open file '%s'." % path)
 
     def onClose(self, e):
         if e.CanVeto():
