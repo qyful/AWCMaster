@@ -19,7 +19,7 @@ class App(wx.Frame):
         wx.Frame.__init__(self, *args, **kwargs)
         
         self.SetSize((800, 600))
-        self.SetTitle("AWCMaster v1.0.2")
+        self.SetTitle("AWCMaster v2.0.2")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
