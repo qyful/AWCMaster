@@ -1,7 +1,6 @@
 import sys
 import os
 import ffmpeg
-import wave
 import pickle
 
 def save_project(path: str, data: dict) -> bool:    
@@ -60,10 +59,14 @@ def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool 
                                         ar=int(value["sample_rate"]),
                                         format='wav',
                                         acodec='pcm_s16le',
-                                        ac=1
+                                        ac=1,
+                                        fflags='+bitexact',
+                                        flags='+bitexact',
+                                        map_metadata=-1,
+                                        map='0:a'
                                        ).run(overwrite_output=True)
         
-        value["path"] = formatted_output_path
+        value["wav_path"] = formatted_output_path
         
         if fxmanifest:
             with open(output_path + "\\fxmanifest.lua", "w") as handler:

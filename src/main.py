@@ -1,25 +1,29 @@
 import wx
-from os import getcwd
+import os
 import sys
 import wave
-from helpers import get_file_info, save_project, open_project, convert_to_wav
-from components import menuBar, PropertiesPanel, SoundListPanel
+from helpers import get_file_info, save_project, open_project, convert_to_wav, get_path
+from components import menuBar, PropertiesPanel, SoundListPanel, DirDialog
 import generation
 
 # For Pyinstaller purposes
 # import pyi_splash
 # pyi_splash.close()
 
-current_projectPath = ""
+current_project_path = ""
 current_project = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds", "fxmanifest": False}
-loadedProject = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds", "fxmanifest": False}
-
-currentItem = ""
+loaded_project = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds", "fxmanifest": False}
 
 class App(wx.Frame):
-    def __init__(self, *args, **kwds):
-        kwds["style"] = kwds.get("style", 0) | wx.BORDER_SIMPLE | wx.DEFAULT_FRAME_STYLE
-        wx.Frame.__init__(self, *args, **kwds)
+    def __init__(self, *args, **kwargs):
+        kwargs["style"] = kwargs.get("style", 0) | wx.BORDER_SIMPLE | wx.DEFAULT_FRAME_STYLE
+        wx.Frame.__init__(self, *args, **kwargs)
+
+        self.original_path = os.environ.get('PATH', '')
+
+        path = get_path("ffmpeg.exe")
+        if path and path not in self.original_path:
+            os.environ["PATH"] += os.pathsep + path
         
         self.SetSize((800, 600))
         self.SetTitle("AWCMaster v1.0.2")
@@ -55,8 +59,6 @@ class App(wx.Frame):
         self.sound_list_panel.delSoundBtn.Bind(wx.EVT_BUTTON, self.onRemoveSound)
         self.sound_list_panel.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected)
         self.sound_list_panel.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onItemDeselected)
-
-        self.properties_panel.SetDefaultProperties()
         self.properties_panel.generateBtn.Bind(wx.EVT_BUTTON, self.onGenerate)
         self.properties_panel.audiobankName.Bind(wx.EVT_TEXT, self.onAudiobankUpdate)
         self.properties_panel.soundsetName.Bind(wx.EVT_TEXT, self.onSoundsetUpdate)
@@ -64,6 +66,7 @@ class App(wx.Frame):
         self.properties_panel.sampleRate.Bind(wx.EVT_CHOICE, self.onSampleRateUpdate)
         self.properties_panel.flags.Bind(wx.EVT_CHECKLISTBOX, self.onFlagUpdate)
 
+        self.properties_panel.SetDefaultProperties()
         self.Layout()
 
     def _get_current_sound(self) -> str:
@@ -91,7 +94,6 @@ class App(wx.Frame):
             current_item = current_project["sound_files"][selected]
 
             current_item["sample_rate"] = self.properties_panel.sampleRate.GetItems()[index]
-            current_item["samples"] = int(current_item["sample_rate"]) * int(current_item["duration"].replace("s", ""))
     
     def onSoundNameUpdate(self, e):
         selected = self._get_current_sound()
@@ -111,8 +113,7 @@ class App(wx.Frame):
             current_project["sound_files"][selected]["flags"] = self.properties_panel.flags.GetCheckedStrings()
 
     def onGenerate(self, e):
-        dirDialog = wx.DirDialog(None, "Choose output directory", getcwd(),
-                    wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dirDialog = DirDialog(self)
 
         if dirDialog.ShowModal() == wx.ID_OK:
             path_name = dirDialog.GetPath()
@@ -126,7 +127,7 @@ class App(wx.Frame):
             data = {}
 
             for key, item in current_project["sound_files"].items():
-                with wave.open(item["path"], 'rb') as audio_file:
+                with wave.open(item["wav_path"], 'rb') as audio_file:
                     sample_rate = audio_file.getframerate()
                     num_frames = audio_file.getnframes()
                     duration_seconds = num_frames / float(sample_rate)
@@ -213,21 +214,23 @@ class App(wx.Frame):
                             self.sound_list_panel.soundsList.Select(_indexed_file_names.index(item))
                             break
 
-                    self.properties_panel.flags.Check(2) # Volume
-                    self.properties_panel.flags.Check(15) # Category
+                    # self.properties_panel.flags.Check(2) # Volume
+                    # self.properties_panel.flags.Check(15) # Category
                     self.properties_panel.soundName.ChangeValue(info["file_name"])
                     self.sound_list_panel.delSoundBtn.Enable()
                     
-            except IOError:
+            except IOError as e:
+                print(e)
                 wx.LogError("Cannot open file '%s'." % path_name)
 
     def onClose(self, e):
         if e.CanVeto():
-            if loadedProject != current_project:
+            if loaded_project != current_project:
                 if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?", wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
                     e.Veto()
                     return
 
+        os.environ['PATH'] = self.original_path
         self.Destroy()
 
 class MyApp(wx.App):
@@ -255,7 +258,7 @@ class MyApp(wx.App):
             current_project["fxmanifest"] = False
 
     def newProj(self, e):
-        if loadedProject != current_project:
+        if loaded_project != current_project:
             if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?",
                              wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
                 return
@@ -272,15 +275,15 @@ class MyApp(wx.App):
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return
 
-            if loadedProject != current_project:
+            if loaded_project != current_project:
                 if wx.MessageBox("Any unsaved changes will be lost", "Are you sure?",
                                  wx.ICON_QUESTION | wx.YES_NO, self.frame) == wx.NO:
                     return
 
             path_name = fileDialog.GetPath()
             
-            global current_projectPath
-            current_projectPath = path_name
+            global current_project_path
+            current_project_path = path_name
 
             try:
                 result = open_project(path_name)
@@ -297,13 +300,12 @@ class MyApp(wx.App):
                                 value["file_size"]
                             ]
                         )
-
             except IOError:
                 wx.LogError("Cannot open file '%s'." % path_name)
 
     def saveProj(self, e):
-        if current_projectPath != "":
-            save_project(current_projectPath, current_project)
+        if current_project_path != "":
+            save_project(current_project_path, current_project)
         else:
             self.saveProjAs(wx.EVT_BUTTON)
 
