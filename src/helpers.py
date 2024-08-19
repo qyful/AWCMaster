@@ -71,7 +71,7 @@ def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool 
             formatted_output_path
         ]
 
-        subprocess.Popen(command)
+        subprocess.Popen(command, creationflags=subprocess.CREATE_NO_WINDOW)
         
         value["wav_path"] = formatted_output_path
         
@@ -103,6 +103,7 @@ def get_file_info(file_path: str) -> dict:
 
     process = subprocess.Popen(
         [ffprobe_path, '-show_format', '-show_streams', '-of', 'json', file_path],
+        creationflags=subprocess.CREATE_NO_WINDOW,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE
     )
