@@ -6,8 +6,8 @@ from components import menuBar, PropertiesPanel, SoundListPanel
 import generation
 
 # For Pyinstaller purposes
-import pyi_splash
-pyi_splash.close()
+# import pyi_splash
+# pyi_splash.close()
 
 current_projectPath = ""
 current_project = {"sound_files": {}, "audiobank_name": "custom_sounds", "soundset_name": "custom_sounds", "fxmanifest": False}

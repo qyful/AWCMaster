@@ -1,6 +1,7 @@
 import sys
 import os
 import ffmpeg
+import wave
 import pickle
 
 def save_project(path: str, data: dict) -> bool:    
@@ -42,7 +43,7 @@ def format_file_size(file_size: int, suffix="B"):
 
 def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool = False):
     """
-    Converts each item from a list of file paths into the appropriate ADPCM format as a WAVE file.
+    Converts each item from a list of file paths into the appropriate PCM format as a WAVE file.
     """
     for value in data["sound_files"].values():
         input_path = value["path"]
@@ -55,7 +56,9 @@ def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool 
             
         ffmpeg.input(input_path).output("{0}\\{1}".format(file_path, output_file),
                                         ar=int(value["sample_rate"]),
-                                        acodec='adpcm_ima_wav'
+                                        format='wav',
+                                        acodec='pcm_s16le',
+                                        ac=1
                                        ).run(overwrite_output=True)
         
         if fxmanifest:

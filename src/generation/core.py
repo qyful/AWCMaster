@@ -35,7 +35,7 @@ class SimpleSound:
                 {
                     "Item": {
                         "Type": "format",
-                        "Codec": "ADPCM",
+                        "Codec": "PCM",
                         "Samples": {"@value": value["samples"]},
                         "SampleRate": {"@value": value["sample_rate"]},
                         "Headroom": {"@value": "-100"},
