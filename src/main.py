@@ -2,7 +2,7 @@ import wx
 import os
 import sys
 import wave
-from helpers import get_file_info, save_project, open_project, convert_to_wav, get_path
+from helpers import get_file_info, save_project, open_project, convert_to_wav
 from components import menuBar, PropertiesPanel, SoundListPanel, DirDialog
 import generation
 
@@ -18,12 +18,6 @@ class App(wx.Frame):
     def __init__(self, *args, **kwargs):
         kwargs["style"] = kwargs.get("style", 0) | wx.BORDER_SIMPLE | wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwargs)
-
-        self.original_path = os.environ.get('PATH', '')
-
-        path = get_path("ffmpeg.exe")
-        if path and path not in self.original_path:
-            os.environ["PATH"] += os.pathsep + path
         
         self.SetSize((800, 600))
         self.SetTitle("AWCMaster v1.0.2")
@@ -230,7 +224,6 @@ class App(wx.Frame):
                     e.Veto()
                     return
 
-        os.environ['PATH'] = self.original_path
         self.Destroy()
 
 class MyApp(wx.App):

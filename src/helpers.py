@@ -1,7 +1,8 @@
-import sys
 import os
-import ffmpeg
+import sys
+import json
 import pickle
+import subprocess
 
 def save_project(path: str, data: dict) -> bool:    
     with open(path, 'wb') as handle:
@@ -54,17 +55,23 @@ def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool 
             os.makedirs(file_path)
 
         formatted_output_path = "{0}\\{1}".format(file_path, output_file)
-            
-        ffmpeg.input(input_path).output(formatted_output_path,
-                                        ar=int(value["sample_rate"]),
-                                        format='wav',
-                                        acodec='pcm_s16le',
-                                        ac=1,
-                                        fflags='+bitexact',
-                                        flags='+bitexact',
-                                        map_metadata=-1,
-                                        map='0:a'
-                                       ).run(overwrite_output=True)
+
+        ffmpeg_path = get_path("ffmpeg.exe")
+        command = [
+            ffmpeg_path,
+            '-i', input_path,
+            '-ar', value["sample_rate"],
+            '-f', 'wav',
+            '-acodec', 'pcm_s16le',
+            '-ac', '1',
+            '-fflags', '+bitexact',
+            '-flags', '+bitexact',
+            '-map_metadata', '-1',
+            '-map', '0:a',
+            formatted_output_path
+        ]
+
+        subprocess.Popen(command)
         
         value["wav_path"] = formatted_output_path
         
@@ -91,41 +98,48 @@ data_file "AUDIO_SOUNDDATA" "data/{data["audiobank_name"]}.dat"
     return data
 
 def get_file_info(file_path: str) -> dict:
-    try:
-        audio_file_info = {}
+    audio_file_info = {}
+    ffprobe_path = get_path("ffprobe.exe")
 
-        probe = ffmpeg.probe(file_path)
-        audio_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'audio'), None)
-        
-        if not audio_stream:
-            print(f"No audio stream found in {file_path}")
-            return None
-        
-        path, file_extension = os.path.splitext(file_path)
-        
-        file_name = path.split('\\')[-1]
-        path = path + file_extension
+    process = subprocess.Popen(
+        [ffprobe_path, '-show_format', '-show_streams', '-of', 'json', file_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
-        duration = float(audio_stream['duration'])
+    stdout, stderr = process.communicate()
 
-        sample_rate = int(audio_stream['sample_rate'])
-        num_samples = int(audio_stream['nb_frames']) if 'nb_frames' in audio_stream else int(sample_rate * duration)
+    probe = json.loads(stdout.decode('utf-8'))
 
-        duration = f"{round(duration)}s"
-        file_extension = file_extension.replace('.', '', 1)
-        
-        file_size = os.path.getsize(file_path)
-        file_size = format_file_size(file_size)
+    print(probe)
 
-        audio_file_info['file_name']      = file_name
-        audio_file_info['file_extension'] = file_extension
-        audio_file_info['path']           = path
-        audio_file_info['duration']       = duration
-        audio_file_info['file_size']      = file_size
-        audio_file_info['samples']        = num_samples
-
-        return audio_file_info
-    
-    except ffmpeg.Error as e:
-        print(f"Error getting properties for {file_path}: {e}")
+    audio_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'audio'), None)
+    print(audio_stream)
+    if not audio_stream:
+        print(f"No audio stream found in {file_path}")
         return None
+    
+    path, file_extension = os.path.splitext(file_path)
+    
+    file_name = path.split('\\')[-1]
+    path = path + file_extension
+
+    duration = float(audio_stream['duration'])
+
+    sample_rate = int(audio_stream['sample_rate'])
+    num_samples = int(audio_stream['nb_frames']) if 'nb_frames' in audio_stream else int(sample_rate * duration)
+
+    duration = f"{round(duration)}s"
+    file_extension = file_extension.replace('.', '', 1)
+    
+    file_size = os.path.getsize(file_path)
+    file_size = format_file_size(file_size)
+
+    audio_file_info['file_name']      = file_name
+    audio_file_info['file_extension'] = file_extension
+    audio_file_info['path']           = path
+    audio_file_info['duration']       = duration
+    audio_file_info['file_size']      = file_size
+    audio_file_info['samples']        = num_samples
+
+    return audio_file_info
