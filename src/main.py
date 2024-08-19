@@ -1,6 +1,7 @@
 import wx
 from os import getcwd
 import sys
+import wave
 from helpers import get_file_info, save_project, open_project, convert_to_wav
 from components import menuBar, PropertiesPanel, SoundListPanel
 import generation
@@ -116,18 +117,25 @@ class App(wx.Frame):
         if dirDialog.ShowModal() == wx.ID_OK:
             path_name = dirDialog.GetPath()
 
-        print(current_project["fxmanifest"])
+        current_project["sound_files"] = convert_to_wav(current_project,
+                                                        output_path=path_name + "\\output",
+                                                        fxmanifest = current_project["fxmanifest"]
+                                                       )["sound_files"]
 
-        convert_to_wav(current_project, output_path=path_name + "\\output", fxmanifest = current_project["fxmanifest"])
-        
         if self.properties_panel.soundType.GetStringSelection() == "SimpleSound":
             data = {}
 
             for key, item in current_project["sound_files"].items():
+                with wave.open(item["path"], 'rb') as audio_file:
+                    sample_rate = audio_file.getframerate()
+                    num_frames = audio_file.getnframes()
+                    duration_seconds = num_frames / float(sample_rate)
+                    num_samples = int(sample_rate * duration_seconds)
+
                 data[key] = {
                     'track': item["file_name"],
                     'flags': item["flags"],
-                    'samples': str(item["samples"]),
+                    'samples': str(num_samples),
                     'sample_rate': str(item["sample_rate"]),
                     'tracks': {'ss': f'{item["file_name"]}.wav'}
                 }

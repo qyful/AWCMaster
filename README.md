@@ -8,7 +8,7 @@
 [![Issues](https://img.shields.io/github/issues/qyful/awcmaster)](https://github.com/qyful/awcmaster/issues)
 [![Forks](https://img.shields.io/github/forks/qyful/awcmaster)](https://github.com/qyful/awcmaster/network/members)
 [![Stars](https://img.shields.io/github/stars/qyful/awcmaster)](https://github.com/qyful/awcmaster/stargazers)
-[![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/yefSA3uzDz?style=flat)](https://discord.gg/yefSA3uzDz)
+[![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/pYSYtYWwbF?style=flat)](https://discord.gg/yefSA3uzDz)
 
 ## Overview
 

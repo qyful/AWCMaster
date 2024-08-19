@@ -53,13 +53,17 @@ def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool 
 
         if not os.path.exists(file_path):
             os.makedirs(file_path)
+
+        formatted_output_path = "{0}\\{1}".format(file_path, output_file)
             
-        ffmpeg.input(input_path).output("{0}\\{1}".format(file_path, output_file),
+        ffmpeg.input(input_path).output(formatted_output_path,
                                         ar=int(value["sample_rate"]),
                                         format='wav',
                                         acodec='pcm_s16le',
                                         ac=1
                                        ).run(overwrite_output=True)
+        
+        value["path"] = formatted_output_path
         
         if fxmanifest:
             with open(output_path + "\\fxmanifest.lua", "w") as handler:
@@ -81,7 +85,7 @@ data_file "AUDIO_SOUNDDATA" "data/{data["audiobank_name"]}.dat"
                 handler.write(data)
                 handler.close()
 
-    return True
+    return data
 
 def get_file_info(file_path: str) -> dict:
     try:
@@ -102,7 +106,7 @@ def get_file_info(file_path: str) -> dict:
         duration = float(audio_stream['duration'])
 
         sample_rate = int(audio_stream['sample_rate'])
-        num_samples = int(sample_rate * duration)
+        num_samples = int(audio_stream['nb_frames']) if 'nb_frames' in audio_stream else int(sample_rate * duration)
 
         duration = f"{round(duration)}s"
         file_extension = file_extension.replace('.', '', 1)
