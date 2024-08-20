@@ -86,6 +86,7 @@ description 'Generated with AWCMaster, a FOSS project'
 files {{
     'audiodirectory/{data["audiobank_name"]}.awc',
     'data/{data["audiobank_name"]}.dat54.rel',
+    'data/{data["audiobank_name"]}.dat54.nametable'
 }}
 
 data_file "AUDIO_WAVEPACK" "audiodirectory"
