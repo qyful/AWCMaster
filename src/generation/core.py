@@ -20,6 +20,19 @@ class SimpleSound:
     def construct(self):
         self._construct_awc()
         self._construct_dat54()
+        self._construct_nametable()
+
+    def _construct_nametable(self):
+        filenames = []
+        
+        for value in self.track_data.values():
+            filenames.append(value["track"] + '_s')
+
+        filenames.append(self.audio_bank_name)
+
+        with open(self.data_dir + f"\\{self.audio_bank_name}.dat54.nametable", "w") as handler:
+            handler.write(" ".join(filenames))
+            handler.close()
 
     def _construct_awc(self):
         container_paths = {"Item": []}
