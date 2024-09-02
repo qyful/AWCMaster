@@ -20,7 +20,7 @@ class App(wx.Frame):
         wx.Frame.__init__(self, *args, **kwargs)
         
         self.SetSize((800, 600))
-        self.SetTitle("AWCMaster v2.2.1")
+        self.SetTitle("AWCMaster v2.2.2")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
         self.Bind(wx.EVT_CLOSE, self.onClose)
 
@@ -112,10 +112,16 @@ class App(wx.Frame):
         if dirDialog.ShowModal() == wx.ID_OK:
             path_name = dirDialog.GetPath()
 
-        current_project["sound_files"] = convert_to_wav(current_project,
-                                                        output_path=path_name + "\\output",
-                                                        fxmanifest = current_project["fxmanifest"]
-                                                       )["sound_files"]
+        response = convert_to_wav(current_project,
+                                    output_path=path_name + "\\output",
+                                    fxmanifest = current_project["fxmanifest"]
+                                 )
+        
+        if "error" in response:
+            wx.LogError(response["error"])
+            return
+
+        current_project["sound_files"] = response["sound_files"]
 
         time.sleep(1)
 
@@ -196,6 +202,10 @@ class App(wx.Frame):
                     self.properties_panel.EnableProperties()
 
                     info = get_file_info(path)
+
+                    if "error" in info:
+                        wx.LogError(info["error"])
+                        return
 
                     if info:
                         current_project["sound_files"][info["file_name"]] = info
