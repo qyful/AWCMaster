@@ -57,6 +57,10 @@ def convert_to_wav(data: dict, output_path: str = os.getcwd(), fxmanifest: bool 
         formatted_output_path = "{0}\\{1}".format(file_path, output_file)
 
         ffmpeg_path = get_path("ffmpeg.exe")
+
+        if not os.path.isfile(ffmpeg_path):
+            return { "error": "ffmpeg.exe was not found. Is it missing in the root directory?" }
+
         command = [
             ffmpeg_path,
             '-i', input_path,
@@ -98,9 +102,12 @@ data_file "AUDIO_SOUNDDATA" "data/{data["audiobank_name"]}.dat"
 
     return data
 
-def get_file_info(file_path: str) -> dict:
+def get_file_info(file_path: str) -> dict | tuple:
     audio_file_info = {}
     ffprobe_path = get_path("ffprobe.exe")
+
+    if not os.path.isfile(ffprobe_path):
+        return { "error": "ffprobe.exe was not found. Is it missing in the root directory?" }
 
     process = subprocess.Popen(
         [ffprobe_path, '-show_format', '-show_streams', '-of', 'json', file_path],
